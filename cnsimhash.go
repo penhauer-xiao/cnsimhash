@@ -31,10 +31,10 @@ func LoadDictionary(jiebapath, idfpath, stopwords, synonympath string) error {
 	if err := extracter.LoadStopWords(stopwords); err != nil {
 		return err
 	}
-	if err := extracter.LoadSynonyms(synonympath); err != nil {
+	/*if err := extracter.LoadSynonyms(synonympath); err != nil {
 		return err
 	}
-	extracter.CalculateSynonymsMaxIDF()
+	extracter.CalculateSynonymsMaxIDF()*/
 	return nil
 }
 
