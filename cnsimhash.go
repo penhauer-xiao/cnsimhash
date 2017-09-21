@@ -3,6 +3,7 @@ package cnsimhash
 import (
 	"hash/fnv"
 
+	"github.com/dgryski/go-bits"
 	"github.com/wangbin/jiebago/analyse"
 )
 
@@ -37,47 +38,19 @@ func LoadDictionary(jiebapath, idfpath, stopwords, synonympath string) error {
 	return nil
 }
 
-// calculate simhash with top n keywords  calculate with all words if topN < 0
-func Simhash(s string, topN int) uint64 {
+// calculate unicode simhash with top n keywords  calculate with all words if topN < 0
+func UnicodeSimhash(s string, topN int) (uint64, analyse.Segments, []string) {
 	if s == "" {
-		return 0
+		return 0, nil, nil
 	}
 
-	hashes, _ := extractHash(s, topN)
+	hashes, weightWords, words := extractHash(s, topN)
 	if len(hashes) == 0 {
-		return 0
+		return 0, weightWords, words
 	}
 
 	weights := calWeights(hashes)
-	return fingerprint(weights)
-}
-
-// calculate CNSimhash with top n keywords  calculate with all words if topN < 0
-func CNSimhash(s string, topN int) (uint64, []string) {
-	if s == "" {
-		return 0, nil
-	}
-
-	hashes, words := extractHash(s, topN)
-	if len(hashes) == 0 {
-		return 0, words
-	}
-
-	weights := calWeights(hashes)
-	return fingerprint(weights), words
-}
-
-// Compare calculates the Hamming distance between two 64-bit integers
-//
-// Currently, this is calculated using the Kernighan method [1]. Other methods
-// exist which may be more efficient and are worth exploring at some point
-func Compare(a uint64, b uint64) uint8 {
-	v := a ^ b
-	var c uint8
-	for c = 0; v != 0; c++ {
-		v &= v - 1
-	}
-	return c
+	return fingerprint(weights), weightWords, words
 }
 
 func hasher(s string) uint64 {
@@ -86,11 +59,11 @@ func hasher(s string) uint64 {
 	return h.Sum64()
 }
 
-func extractHash(s string, topN int) ([]hashWeigth, []string) {
+func extractHash(s string, topN int) ([]hashWeigth, analyse.Segments, []string) {
 	weightWords, words := extracter.CNExtractTags(s, topN)
 	wordsLen := len(weightWords)
 	if wordsLen == 0 {
-		return []hashWeigth{}, words
+		return []hashWeigth{}, weightWords, words
 	}
 
 	result := make([]hashWeigth, wordsLen)
@@ -98,7 +71,7 @@ func extractHash(s string, topN int) ([]hashWeigth, []string) {
 		hash := hasher(w.Text())
 		result[i] = hashWeigth{hash, w.Weight()}
 	}
-	return result, words
+	return result, weightWords, words
 }
 
 func calWeights(hashes []hashWeigth) [64]float64 {
@@ -123,4 +96,21 @@ func fingerprint(weights [64]float64) uint64 {
 		}
 	}
 	return f
+}
+
+// Compare calculates the Hamming distance between two 64-bit integers
+//
+// Currently, this is calculated using the Kernighan method [1]. Other methods
+// exist which may be more efficient and are worth exploring at some point
+func Compare(a uint64, b uint64) uint8 {
+	v := a ^ b
+	var c uint8
+	for c = 0; v != 0; c++ {
+		v &= v - 1
+	}
+	return c
+}
+
+func Distance(v1 uint64, v2 uint64) int {
+	return int(bits.Popcnt(v1 ^ v2))
 }
