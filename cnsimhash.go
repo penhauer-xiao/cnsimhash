@@ -53,6 +53,10 @@ func UnicodeSimhash(s string, topN int) (uint64, analyse.Segments, []string) {
 	return fingerprint(weights), weightWords, words
 }
 
+func IDFPrint() {
+
+}
+
 func hasher(s string) uint64 {
 	h := fnv.New64a()
 	h.Write([]byte(s))
