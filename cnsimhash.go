@@ -22,12 +22,14 @@ type hashWeigth struct {
 
 // To Load jieba, idf, stop words dictionaries
 func LoadDictionary(jiebapath, idfpath, stopwords, synonympath string) error {
-	if err := extracter.LoadDictionary(jiebapath); err != nil {
-		return err
-	}
 	if err := extracter.LoadIdf(idfpath); err != nil {
 		return err
 	}
+
+	if err := extracter.LoadDictionary(jiebapath); err != nil {
+		return err
+	}
+
 	if err := extracter.LoadStopWords(stopwords); err != nil {
 		return err
 	}
@@ -51,10 +53,6 @@ func UnicodeSimhash(s string, topN int) (uint64, analyse.Segments, []string) {
 
 	weights := calWeights(hashes)
 	return fingerprint(weights), weightWords, words
-}
-
-func IDFPrint() {
-
 }
 
 func hasher(s string) uint64 {
